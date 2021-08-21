@@ -50,6 +50,11 @@
                 "when": "textInputFocus"
             },
             {
+                "key": "alt+j",
+                "command": "cursorDownBlock",
+                "when": "textInputFocus"
+            },
+            {
                 "key": "ctrl+l",
                 "command": "cursorRight",
                 "when": "textInputFocus"
