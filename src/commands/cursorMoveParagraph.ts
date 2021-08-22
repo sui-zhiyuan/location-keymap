@@ -1,34 +1,34 @@
-import * as vscode from "vscode";
+import * as vscode from "vscode"
 
-import { Command, Direction } from "./base";
+import { Command, Direction } from "./base"
 
-export let cursorUpBlock: Command = {
-    name: "cursorUpBlock",
+export let cursorUpParagraph: Command = {
+    name: "cursorUpParagraph",
 
     callback: async function (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]): Promise<void> {
         let direction = Direction.Up;
-        let lines = findBlockEdge(textEditor, direction)
+        let lines = findParagraphEdge(textEditor, direction)
         await vscode.commands.executeCommand("cursorMove", {
             to: Direction.GetName(direction), by: "line", value: lines
         })
     }
 }
 
-export let cursorDownBlock: Command = {
-    name: "cursorDownBlock",
+export let cursorDownParagraph: Command = {
+    name: "cursorDownParagraph",
 
     callback: async function (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]): Promise<void> {
         let direction = Direction.Down;
-        let lines = findBlockEdge(textEditor, direction)
+        let lines = findParagraphEdge(textEditor, direction)
         await vscode.commands.executeCommand("cursorMove", {
             to: Direction.GetName(direction), by: "line", value: lines
         })
     }
 }
 
-const maxBlockLine = 50
+const maxParagraphLine = 50
 
-function findBlockEdge(editor: vscode.TextEditor, d: Direction): number {
+function findParagraphEdge(editor: vscode.TextEditor, d: Direction): number {
     let dLine = 0
     switch (d) {
         case Direction.Down: dLine = 1; break;
@@ -41,7 +41,7 @@ function findBlockEdge(editor: vscode.TextEditor, d: Direction): number {
 
     let currentLine = editor.selection.active.line;
     let changeLine = 1
-    for (; changeLine <= maxBlockLine; changeLine++) {
+    for (; changeLine <= maxParagraphLine; changeLine++) {
         let targetLine = currentLine + (changeLine * dLine)
         if (targetLine < 0 || targetLine >= editor.document.lineCount) {
             changeLine--;

@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 
-import { cursorUpBlock , cursorDownBlock } from "./cursorMoveBlock";
+import { cursorDownParagraph , cursorUpParagraph } from "./cursorMoveParagraph";
 
-let allCommands = [cursorUpBlock , cursorDownBlock]
+let allCommands = [cursorDownParagraph , cursorUpParagraph]
 
 export function registerCommands(context: vscode.ExtensionContext){
     for(let command of allCommands){

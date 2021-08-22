@@ -24,16 +24,6 @@
         ],
         "keybindings": [
             {
-                "key": "ctrl+k",
-                "command": "cursorUp",
-                "when": "textInputFocus"
-            },
-            {
-                "key": "alt+k",
-                "command": "cursorUpBlock",
-                "when": "textInputFocus"
-            },
-            {
                 "key": "ctrl+h",
                 "command": "cursorLeft",
                 "when": "textInputFocus"
@@ -42,7 +32,6 @@
                 "key": "alt+h",
                 "command": "cursorWordLeft",
                 "when": "textInputFocus"
-
             },
             {
                 "key": "ctrl+j",
@@ -51,7 +40,17 @@
             },
             {
                 "key": "alt+j",
-                "command": "cursorDownBlock",
+                "command": "cursorDownParagraph",
+                "when": "textInputFocus"
+            },
+            {
+                "key": "ctrl+k",
+                "command": "cursorUp",
+                "when": "textInputFocus"
+            },
+            {
+                "key": "alt+k",
+                "command": "cursorUpParagraph",
                 "when": "textInputFocus"
             },
             {
@@ -63,6 +62,17 @@
                 "key": "alt+l",
                 "command": "cursorWordRight",
                 "when": "textInputFocus"
+            },
+
+            {
+                "key": "ctrl+j",
+                "command": "workbench.action.quickOpenSelectNext",
+                "when": "inQuickOpen"
+            },
+            {
+                "key": "ctrl+k",
+                "command": "workbench.action.quickOpenSelectPrevious",
+                "when": "inQuickOpen"
             }
         ]
     },
