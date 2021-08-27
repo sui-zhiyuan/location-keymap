@@ -36,7 +36,7 @@
             {
                 "key": "ctrl+j",
                 "command": "cursorDown",
-                "when": "textInputFocus"
+                "when": "textInputFocus && !suggestWidgetVisible"
             },
             {
                 "key": "alt+j",
@@ -46,7 +46,7 @@
             {
                 "key": "ctrl+k",
                 "command": "cursorUp",
-                "when": "textInputFocus"
+                "when": "textInputFocus && !suggestWidgetVisible"
             },
             {
                 "key": "alt+k",
@@ -66,6 +66,17 @@
 
             {
                 "key": "ctrl+j",
+                "command": "selectNextSuggestion",
+                "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+            },
+            {
+                "key": "ctrl+k",
+                "command": "selectPrevSuggestion",
+                "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+            },
+
+            {
+                "key": "ctrl+j",
                 "command": "workbench.action.quickOpenSelectNext",
                 "when": "inQuickOpen"
             },
@@ -73,6 +84,27 @@
                 "key": "ctrl+k",
                 "command": "workbench.action.quickOpenSelectPrevious",
                 "when": "inQuickOpen"
+            },
+
+            {
+                "key": "ctrl+f ctrl+f",
+                "command": "workbench.action.quickOpen"
+            },
+            {
+                "key": "ctrl+f ctrl+e",
+                "command": "workbench.action.showCommands"
+            },
+            {
+                "key": "ctrl+f ctrl+r",
+                "command": "workbench.action.gotoSymbol"
+            },
+            {
+                "key": "ctrl+f alt+r",
+                "command": "workbench.action.showAllSymbols"
+            },
+            {
+                "key": "ctrl+f ctrl+t",
+                "command": "workbench.action.gotoLine"
             }
         ]
     },
