@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
-import { registerCommands } from './commands/major';
+import { registerCommands } from 'command/command';
 
-export function activate(context: vscode.ExtensionContext){
+export function activate(context: vscode.ExtensionContext) {
     let logger = vscode.window.createOutputChannel("location-keymap")
     logger.appendLine("start register command")
 
