@@ -1,22 +1,22 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es6",
-		"outDir": "out",
+		"module": "Node16",
+		"target": "ES2022",
 		"lib": [
-			"es2021"
+			"ES2022"
 		],
 		"sourceMap": true,
 		"rootDir": "src",
-		"strict": true, /* enable all strict type-checking options */
-		"baseUrl": "./src"
+		"strict": true,   /* enable all strict type-checking options */
+		"baseUrl": "./src",
+		"paths": {
+			"@app/*": [
+				"*"
+			] // define mapping from module names to file paths
+		},
 		/* Additional Checks */
-		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
-	},
-	"exclude": [
-		"node_modules",
-		".vscode-test"
-	]
+		"noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+		"noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+		"noUnusedParameters": true,  /* Report errors on unused parameters. */
+	}
 }

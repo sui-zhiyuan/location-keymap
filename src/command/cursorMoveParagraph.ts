@@ -1,5 +1,6 @@
-import { Command, moveCallback } from "command/base";
-import { Direction, MoveLevel } from "common/common";
+import { Direction, MoveLevel } from "@app/common/common";
+
+import { Command, moveCallback } from "./base";
 
 export let commands: Command[] = [];
 

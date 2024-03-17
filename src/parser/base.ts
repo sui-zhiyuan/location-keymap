@@ -1,7 +1,8 @@
-import { Direction, MoveLevel } from "common/common";
 import { TextDocument, TextLine } from "vscode";
 
-const maxMoveLine = 50
+import { Direction, MoveLevel } from "@app/common/common";
+
+const maxMoveLine = 50;
 
 export interface MoveParameter {
     readonly document: TextDocument;
@@ -17,7 +18,7 @@ export abstract class BaseParser {
             case Direction.Down:
                 return para.currentLine.lineNumber >= para.document.lineCount;
             default:
-                throw new Error("unexcepted direction");
+                throw new Error("unexpected direction");
         }
     }
 
@@ -29,8 +30,8 @@ export abstract class BaseParser {
         }
 
         let [dRow, _] = Direction.getMove(para.direction);
-        if (dRow == 0) {
-            throw new Error("unexcepted direction")
+        if (dRow === 0) {
+            throw new Error("unexpected direction");
         }
         let nextRowNumber = para.currentLine.lineNumber + dRow;
         return para.document.lineAt(nextRowNumber).isEmptyOrWhitespace;
@@ -46,10 +47,10 @@ export abstract class BaseParser {
                 checker = this.isParagraphEdge;
                 break;
             default:
-                throw new Error("unexcepted checker");
+                throw new Error("unexpected checker");
         }
         let [dRow, _] = Direction.getMove(para.direction);
-        if (dRow == 0) {
+        if (dRow === 0) {
             throw new Error("wrong direction");
         }
         let currentLine = para.currentLine.lineNumber;

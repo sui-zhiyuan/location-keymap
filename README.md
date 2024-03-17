@@ -1,1 +1,4 @@
-This is a test readme file
+# README
+## This is the README for your extension "location-keymap"
+
+**Enjoy!**

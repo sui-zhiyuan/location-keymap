@@ -1,4 +1,5 @@
-import { MoveLevel } from "common/common";
+import { MoveLevel } from "@app/common/common";
+
 import { MoveParameter } from "./base";
 import { CSharp } from "./language/csharp";
 import { Typescript } from "./language/typescript";

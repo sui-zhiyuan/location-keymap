@@ -1,6 +1,7 @@
-import { Direction, MoveLevel } from "common/common";
-import { getParser } from "parser/parser";
-import * as vscode from "vscode"
+import * as vscode from "vscode";
+
+import { Direction, MoveLevel } from "@app/common/common";
+import { getParser } from "@app/parser/parser";
 
 type CommandCallback = (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]) => void
 
@@ -11,7 +12,7 @@ export interface Command {
 }
 
 export function moveCallback(direction: Direction, level: MoveLevel): CommandCallback {
-    return async function (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]): Promise<void> {
+    return async function (textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit, ..._args: any[]): Promise<void> {
         let parser = getParser(textEditor.document.languageId);
         let lines = parser.findEdge({
             document: textEditor.document,

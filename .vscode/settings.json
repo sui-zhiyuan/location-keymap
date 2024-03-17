@@ -1,11 +1,18 @@
 {
     "files.exclude": {
         "out": true,
+        "dist": true,
         "*.vsix": true,
         "node_modules": true,
-        "package-lock.json": true
     },
+    "explorer.fileNesting.patterns": {
+        "package.json": "pnpm-lock.yaml",
+    },
+    "typescript.tsc.autoDetect": "off",
     "search.exclude": {
-        "out": true
+        "out": true,
+        "dist": true,
+        "pnpm-lock.yaml": true,
+        "node_modules": true,
     }
 }
