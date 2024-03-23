@@ -14,5 +14,6 @@
         "dist": true,
         "pnpm-lock.yaml": true,
         "node_modules": true,
-    }
+    },
+    "npm.packageManager": "pnpm"
 }

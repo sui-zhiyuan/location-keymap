@@ -1,26 +1,9 @@
-import * as vscode from "vscode";
+import { TextEditor, TextEditorEdit } from "vscode";
 
-import { Direction, MoveLevel } from "@app/common/common";
-import { getParser } from "@app/parser/parser";
-
-type CommandCallback = (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]) => void
-
-export interface Command {
-    readonly name: string
-    readonly callback: CommandCallback
-    thisArg?: any
+interface Command {
+    get name(): string
+    get thisArg(): any
+    callback(textEditor: TextEditor, edit: TextEditorEdit, ...args: any[]): Promise<void>
 }
 
-export function moveCallback(direction: Direction, level: MoveLevel): CommandCallback {
-    return async function (textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit, ..._args: any[]): Promise<void> {
-        let parser = getParser(textEditor.document.languageId);
-        let lines = parser.findEdge({
-            document: textEditor.document,
-            currentLine: textEditor.document.lineAt(textEditor.selection.active.line),
-            direction: direction
-        }, level)
-        await vscode.commands.executeCommand("cursorMove", {
-            to: Direction[direction], by: "line", value: lines
-        })
-    }
-}
+export { Command };

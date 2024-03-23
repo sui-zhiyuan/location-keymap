@@ -1,66 +1,44 @@
-import { TextDocument, TextLine } from "vscode";
+import { CursorMoveParameter, Direction } from "@app/common";
 
-import { Direction, MoveLevel } from "@app/common/common";
-
-const maxMoveLine = 50;
-
-export interface MoveParameter {
-    readonly document: TextDocument;
-    readonly currentLine: TextLine;
-    readonly direction: Direction;
-}
-
-export abstract class BaseParser {
-    protected isDocumentEdge(para: MoveParameter): boolean {
+class EdgeChecker {
+    isDocumentEdge(para: CursorMoveParameter): boolean {
         switch (para.direction) {
             case Direction.Up:
-                return para.currentLine.lineNumber <= 0;
             case Direction.Down:
-                return para.currentLine.lineNumber >= para.document.lineCount;
+                return para.position.line <= 0 || para.position.line >= para.document.lineCount;
+            case Direction.Left:
+            case Direction.Right:
+                return para.position.character <= 0 || para.position.character >= para.document.lineAt(para.position.line).text.length;
             default:
                 throw new Error("unexpected direction");
         }
     }
 
-    protected abstract isSectionEdge(para: MoveParameter): boolean;
+    isSectionEdge(_para: CursorMoveParameter): boolean {
+        throw new Error("Function not implemented.");
+    }
 
-    protected isParagraphEdge(para: MoveParameter): boolean {
+    isParagraphEdge(para: CursorMoveParameter): boolean {
+        if (this.isDocumentEdge(para)) {
+            return true;
+        }
         if (this.isSectionEdge(para)) {
             return true;
         }
 
-        let [dRow, _] = Direction.getMove(para.direction);
-        if (dRow === 0) {
-            throw new Error("unexpected direction");
-        }
-        let nextRowNumber = para.currentLine.lineNumber + dRow;
-        return para.document.lineAt(nextRowNumber).isEmptyOrWhitespace;
+        const isPrevLineEmpty = para.position.line === 0 || para.document.lineAt(para.position.line - 1).isEmptyOrWhitespace;
+        const isCurrentLineEmpty = para.document.lineAt(para.position.line).isEmptyOrWhitespace;
+
+        return isPrevLineEmpty && !isCurrentLineEmpty;
     }
 
-    public findEdge(para: MoveParameter, level: MoveLevel) {
-        let checker: (para: MoveParameter) => boolean;
-        switch (level) {
-            case MoveLevel.Section:
-                checker = this.isSectionEdge;
-                break;
-            case MoveLevel.Paragraph:
-                checker = this.isParagraphEdge;
-                break;
-            default:
-                throw new Error("unexpected checker");
-        }
-        let [dRow, _] = Direction.getMove(para.direction);
-        if (dRow === 0) {
-            throw new Error("wrong direction");
-        }
-        let currentLine = para.currentLine.lineNumber;
-        let changeLine = 1
-        for (; changeLine <= maxMoveLine; changeLine++) {
-            let targetLine = para.document.lineAt(currentLine + changeLine * dRow);
-            if (checker({ document: para.document, currentLine: targetLine, direction: para.direction })) {
-                break;
-            }
-        }
-        return changeLine;
+    isWordEdge(_para: CursorMoveParameter): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    isExpressionEdge(_para: CursorMoveParameter): boolean {
+        throw new Error("Method not implemented.");
     }
 }
+
+export { EdgeChecker };

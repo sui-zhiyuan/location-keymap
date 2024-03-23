@@ -1,11 +1,13 @@
-export enum Direction {
+import { Position, TextDocument } from "vscode";
+
+enum Direction {
     Left = 1,
     Down,
     Up,
     Right,
 }
 
-export namespace Direction {
+namespace Direction {
     export function getMove(d: Direction): [dRow: number, dColumn: number] {
         switch (d) {
             case Direction.Left: return [0, -1];
@@ -17,8 +19,19 @@ export namespace Direction {
     }
 }
 
-export enum MoveLevel {
-    Section = 1,
-    Paragraph = 2,
+enum MoveLevel {
+    Single = 1,
+    Normal = 2,
+    Bulk = 3,
+    All = 4,
 }
 
+export { Direction, MoveLevel };
+
+interface CursorMoveParameter {
+    readonly document: TextDocument;
+    readonly position: Position;
+    readonly direction: Direction;
+}
+
+export { CursorMoveParameter };
