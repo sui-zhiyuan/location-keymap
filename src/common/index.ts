@@ -26,12 +26,12 @@ enum MoveLevel {
     All = 4,
 }
 
-export { Direction, MoveLevel };
-
 interface CursorMoveParameter {
     readonly document: TextDocument;
+    readonly languageId: string;
     readonly position: Position;
     readonly direction: Direction;
+    readonly level: MoveLevel;
 }
 
-export { CursorMoveParameter };
+export { Direction, MoveLevel, CursorMoveParameter };

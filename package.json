@@ -2,6 +2,10 @@
   "name": "location-keymap",
   "displayName": "location-keymap",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sui-zhiyuan/location-keymap"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.87.0"
@@ -171,8 +175,18 @@
         "when": "editorTextFocus"
       },
       {
+        "key": "ctrl+shift+j",
+        "command": "cursorDown",
+        "when": "editorTextFocus"
+      },
+      {
         "key": "ctrl+k",
         "command": "cursorUpParagraph",
+        "when": "editorTextFocus"
+      },
+      {
+        "key": "ctrl+shift+k",
+        "command": "cursorUp",
         "when": "editorTextFocus"
       },
       {

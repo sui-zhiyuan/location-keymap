@@ -6,7 +6,7 @@ import { init as initParser } from '@app/parser';
 
 export function activate(context: ExtensionContext) {
     const log = initLog(context);
-    const parser = initParser();
+    const parser = initParser(log);
     initCommand(context, log, parser);
 
     log.info("initialize finished");

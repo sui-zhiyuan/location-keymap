@@ -21,11 +21,13 @@ class CursorMoveCommand implements Command {
 
     callback = async (textEditor: TextEditor, _edit: TextEditorEdit, ..._args: any[]) => {
         let prevPos = textEditor.selection.active;
-        const newPos = this.parser.findEdge(textEditor.document.languageId, {
+        const newPos = this.parser.findNext({
+            languageId: textEditor.document.languageId,
             document: textEditor.document,
             position: prevPos,
-            direction: this.direction
-        }, this.level);
+            direction: this.direction,
+            level: this.level
+        });
         let move = this.getMove(prevPos, newPos);
         if (move === null) {
             return;

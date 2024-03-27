@@ -1,20 +1,14 @@
-import { Direction, CursorMoveParameter } from "@app/common";
-import { EdgeChecker } from "../base";
+import { TextDocument } from "vscode";
+import { SubParser } from "../base";
 
-export class Typescript extends EdgeChecker {
-    override isSectionEdge(para: CursorMoveParameter): boolean {
-        if (this.isDocumentEdge(para)) {
-            return true;
-        }
+export class Typescript extends SubParser {
+    override isSectionStart = (document: TextDocument, line: number): boolean => {
+        const lineText = document.lineAt(line).text;
+        return lineText.endsWith('{');
+    };
 
-        const line = para.document.lineAt(para.position);
-        switch (para.direction) {
-            case Direction.Up:
-                return line.text.endsWith('{');
-            case Direction.Down:
-                return line.text.endsWith('}');
-            default:
-                throw new Error("wrong direction");
-        }
-    }
+    override isSectionEnd = (document: TextDocument, line: number): boolean => {
+        const lineText = document.lineAt(line).text;
+        return lineText.endsWith('}');
+    };
 }

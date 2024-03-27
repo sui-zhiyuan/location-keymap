@@ -1,82 +1,129 @@
-import { Position } from "vscode";
 import { MoveLevel, CursorMoveParameter, Direction } from "@app/common";
-import { EdgeChecker } from "./base";
+import { Logger } from "@app/log";
+import { LineType, SubParser } from "./base";
 import { CSharp } from "./language/csharp";
 import { Typescript } from "./language/typescript";
+import { Position, TextDocument } from "vscode";
 
-const maxMove = 50;
+export function init(log: Logger): Parser {
+    return new IParser(log);
+}
 
-interface Parser {
-    findEdge(languageId: string, para: CursorMoveParameter, level: MoveLevel): Position;
+export interface Parser {
+    findNext(para: CursorMoveParameter): Position;
 }
 
 class IParser implements Parser {
-    edgeChecker: Map<string, EdgeChecker>;
+    subParsers: Map<string, SubParser>;
+    log: Logger;
 
-    constructor() {
-        let edgeChecker = new Map<string, EdgeChecker>();
-        edgeChecker.set("", new EdgeChecker);
-        edgeChecker.set("typescript", new Typescript);
-        edgeChecker.set("csharp", new CSharp);
-        this.edgeChecker = edgeChecker;
+    constructor(log: Logger) {
+        let subParsers = new Map<string, SubParser>();
+        subParsers.set("", new SubParser);
+        subParsers.set("typescript", new Typescript);
+        subParsers.set("csharp", new CSharp);
+        this.subParsers = subParsers;
+        this.log = log;
     }
 
-    findEdge(languageId: string, para: CursorMoveParameter, level: MoveLevel): Position {
-        switch (level) {
-            case MoveLevel.Single:
-                return this.singleMove(para);
-            case MoveLevel.All:
-                return this.allMove(para);
-            default:
-                break;
+    findNext(para: CursorMoveParameter): Position {
+        const revertTable = new Map<Direction, number>([
+            [Direction.Down, 1],
+            [Direction.Up, -1],
+        ]);
+        const revert = revertTable.get(para.direction) ?? (() => { throw new Error("unreachable code"); })();
+
+        const maxMoveTable = new Map<MoveLevel, number>([
+            [MoveLevel.Normal, 10],
+            [MoveLevel.Bulk, 50],
+        ]);
+        const maxMove = maxMoveTable.get(para.level) ?? (() => { throw new Error("unreachable code"); })();
+
+        let edgeCheck: (s: States) => boolean;
+        if (para.level === MoveLevel.Normal && para.direction === Direction.Down) {
+            edgeCheck = (s: States) =>
+                s.curr.t === LineType.DocumentEnd ||
+                s.curr.l < 0 && this.paraStartLine(s.curr.t) ||
+                s.curr.l === 0 && this.paraStartLine(s.next.t) && s.prev.t === LineType.EmptyLine;
+        } else if (para.level === MoveLevel.Normal && para.direction === Direction.Up) {
+            edgeCheck = (s: States) =>
+                s.curr.t === LineType.DocumentStart ||
+                s.curr.l < 0 && this.paraStartLine(s.curr.t) ||
+                s.curr.l === 0 && this.paraStartLine(s.next.t) && s.next.t === LineType.EmptyLine;
+        } else if (para.level === MoveLevel.Bulk) {
+            edgeCheck = (s: States) => s.curr.t === LineType.SectionStart && s.curr.l === 0;
+        } else {
+            throw new Error("unreachable code");
         }
 
-        let checker = this.getEdgeChecker(languageId);
-        let checkerFn: (para: CursorMoveParameter) => boolean;
-        switch (true) {
-            case (level === MoveLevel.Normal && para.direction === Direction.Up):
-            case (level === MoveLevel.Normal && para.direction === Direction.Down):
-                checkerFn = checker.isParagraphEdge;
-                break;
-            case (level === MoveLevel.Bulk && para.direction === Direction.Up):
-            case (level === MoveLevel.Bulk && para.direction === Direction.Down):
-                checkerFn = checker.isSectionEdge;
-                break;
-            case (level === MoveLevel.Normal && para.direction === Direction.Left):
-            case (level === MoveLevel.Normal && para.direction === Direction.Right):
-                checkerFn = checker.isWordEdge;
-                break;
-            case (level === MoveLevel.Bulk && para.direction === Direction.Left):
-            case (level === MoveLevel.Bulk && para.direction === Direction.Right):
-                checkerFn = checker.isExpressionEdge;
-                break;
-            default:
-                throw new Error("unexpected checker");
-        }
+        const subParser = this.getSubParser(para.languageId);
+        const [dRow, _] = Direction.getMove(para.direction);
 
-        let [dRow, dColumn] = Direction.getMove(para.direction);
-        let newPos = para.position;
+        let lt0 = subParser.parseLine(para.document, para.position.line);
+        let lt1 = subParser.parseLine(para.document, para.position.line + dRow);
+        let states = new States(
+            { t: LineType.Normal, l: 0 },
+            { t: lt0, l: 0 },
+            { t: lt1, l: this.nextLevel(0, lt0, lt1, revert) },
+        );
+        this.logLine(para, para.position.line, states.curr);
+        this.logLine(para, para.position.line + revert, states.next);
+
         for (let change = 1; change <= maxMove; change++) {
-            newPos = para.position.translate(change * dRow, change * dColumn);
-            if (checkerFn.call(checker, { document: para.document, position: newPos, direction: para.direction })) {
-                break;
+            const line = para.position.line + (change + 1) * dRow;
+            let nextType = subParser.parseLine(para.document, line);
+            states.move({ t: nextType, l: this.nextLevel(states.next.l, states.next.t, nextType, revert) });
+            this.logLine(para, line, states.next);
+
+            if (change !== 0 && edgeCheck(states)) {
+                return this.moveByLine(para.document, para.position, change * dRow);
             }
         }
-        return newPos;
+        return this.moveByLine(para.document, para.position, maxMove * dRow);
     }
 
-    private singleMove(_para: CursorMoveParameter): Position {
-        throw new Error("Method not implemented.");
+    private logLine(para: CursorMoveParameter, line: number, state: { t: LineType, l: number }) {
+        const log = this.log;
+        let content = "";
+        if (line >= 0 && line < para.document.lineCount) {
+            content = para.document.lineAt(line).text;
+        }
+        log.info(`${line + 1} t=${LineType.toDisplay(state.t)} l=${state.l} ${content}`);
     }
 
-    private allMove(_para: CursorMoveParameter): Position {
-        throw new Error("Method not implemented.");
+    private paraStartLine(t: LineType): boolean {
+        return t === LineType.SectionStart || t === LineType.DocumentEnd || t === LineType.Normal;
     }
 
-    getEdgeChecker(languageId: string): EdgeChecker {
-        let checker = this.edgeChecker.get(languageId);
+    private nextLevel(curr: number, currType: LineType, nextType: LineType, revert: number): number {
+        if (currType === LineType.SectionStart) {
+            curr += revert;
+        }
+        if (nextType === LineType.SectionEnd) {
+            curr -= revert;
+        }
+        return curr;
+    }
+
+    private moveByLine(document: TextDocument, pos: Position , changeLine: number): Position {
+        let targetLine = pos.line + changeLine;
+        targetLine = targetLine < 0 ? 0 :  targetLine;
+        targetLine = targetLine >= document.lineCount ? document.lineCount - 1 : targetLine;
+        return new Position(targetLine, pos.character);
+    }
+
+    // private singleMove(_para: CursorMoveParameter): Position {
+    //     throw new Error("Method not implemented.");
+    // }
+
+    // private allMove(_para: CursorMoveParameter): Position {
+    //     throw new Error("Method not implemented.");
+    // }
+
+    getSubParser(languageId: string): SubParser {
+        let checker = this.subParsers.get(languageId);
         if (checker === undefined) {
-            checker = this.edgeChecker.get("");
+            checker = this.subParsers.get("");
         }
         if (checker === undefined) {
             throw new Error("unreachable code");
@@ -85,11 +132,35 @@ class IParser implements Parser {
     }
 }
 
-function init(): Parser{
-    return new IParser();
-}
+interface State { t: LineType; l: number; };
 
-export {
-    init,
-    Parser,
-};
+class States {
+    private states: State[] = [];
+    private pCurr: number = 0;
+
+    get prev(): State {
+        return this.states[(this.pCurr + 2) % 3] ?? (() => { throw new Error("unreachable code"); })();
+    }
+    private set prev(n: State) {
+        this.states[(this.pCurr + 2) % 3] = n;
+    }
+    get curr(): State {
+        return this.states[this.pCurr] ?? (() => { throw new Error("unreachable code"); })();;
+    }
+    get next(): State {
+        return this.states[(this.pCurr + 1) % 3] ?? (() => { throw new Error("unreachable code"); })();
+
+    }
+
+    constructor(prev: State, current: State, next: State) {
+        this.states.push(prev);
+        this.states.push(current);
+        this.states.push(next);
+        this.pCurr = 1;
+    }
+
+    move(n: State): void {
+        this.prev = n;
+        this.pCurr = (this.pCurr + 1) % 3;
+    }
+}
