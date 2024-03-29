@@ -27,11 +27,7 @@ class IParser implements Parser {
     }
 
     findNext(para: CursorMoveParameter): Position {
-        const revertTable = new Map<Direction, number>([
-            [Direction.Down, 1],
-            [Direction.Up, -1],
-        ]);
-        const revert = revertTable.get(para.direction) ?? (() => { throw new Error("unreachable code"); })();
+        const [dRow, _] = Direction.getMove(para.direction);
 
         const maxMoveTable = new Map<MoveLevel, number>([
             [MoveLevel.Normal, 10],
@@ -44,12 +40,12 @@ class IParser implements Parser {
             edgeCheck = (s: States) =>
                 s.curr.t === LineType.DocumentEnd ||
                 s.curr.l < 0 && this.paraStartLine(s.curr.t) ||
-                s.curr.l === 0 && this.paraStartLine(s.next.t) && s.prev.t === LineType.EmptyLine;
+                s.curr.l === 0 && this.paraStartLine(s.curr.t) && s.prev.t === LineType.EmptyLine;
         } else if (para.level === MoveLevel.Normal && para.direction === Direction.Up) {
             edgeCheck = (s: States) =>
                 s.curr.t === LineType.DocumentStart ||
                 s.curr.l < 0 && this.paraStartLine(s.curr.t) ||
-                s.curr.l === 0 && this.paraStartLine(s.next.t) && s.next.t === LineType.EmptyLine;
+                s.curr.l === 0 && this.paraStartLine(s.curr.t) && s.next.t === LineType.EmptyLine;
         } else if (para.level === MoveLevel.Bulk) {
             edgeCheck = (s: States) => s.curr.t === LineType.SectionStart && s.curr.l === 0;
         } else {
@@ -57,25 +53,24 @@ class IParser implements Parser {
         }
 
         const subParser = this.getSubParser(para.languageId);
-        const [dRow, _] = Direction.getMove(para.direction);
 
         let lt0 = subParser.parseLine(para.document, para.position.line);
         let lt1 = subParser.parseLine(para.document, para.position.line + dRow);
         let states = new States(
             { t: LineType.Normal, l: 0 },
             { t: lt0, l: 0 },
-            { t: lt1, l: this.nextLevel(0, lt0, lt1, revert) },
+            { t: lt1, l: this.nextLevel(0, lt0, lt1, dRow) },
         );
         this.logLine(para, para.position.line, states.curr);
-        this.logLine(para, para.position.line + revert, states.next);
+        this.logLine(para, para.position.line + dRow, states.next);
 
         for (let change = 1; change <= maxMove; change++) {
             const line = para.position.line + (change + 1) * dRow;
             let nextType = subParser.parseLine(para.document, line);
-            states.move({ t: nextType, l: this.nextLevel(states.next.l, states.next.t, nextType, revert) });
+            states.move({ t: nextType, l: this.nextLevel(states.next.l, states.next.t, nextType, dRow) });
             this.logLine(para, line, states.next);
 
-            if (change !== 0 && edgeCheck(states)) {
+            if (edgeCheck(states)) {
                 return this.moveByLine(para.document, para.position, change * dRow);
             }
         }
@@ -95,12 +90,19 @@ class IParser implements Parser {
         return t === LineType.SectionStart || t === LineType.DocumentEnd || t === LineType.Normal;
     }
 
-    private nextLevel(curr: number, currType: LineType, nextType: LineType, revert: number): number {
-        if (currType === LineType.SectionStart) {
-            curr += revert;
+    private nextLevel(curr: number, currType: LineType, nextType: LineType, dRow: number): number {
+        if (dRow === 1 && currType === LineType.SectionStart) {
+            curr += 1;
         }
-        if (nextType === LineType.SectionEnd) {
-            curr -= revert;
+        if (dRow === 1 && nextType === LineType.SectionEnd) {
+            curr -= 1;
+        }
+
+        if (dRow === -1 && currType === LineType.SectionEnd) {
+            curr += 1;
+        }
+        if (dRow === -1 && nextType === LineType.SectionStart){
+            curr -= 1;
         }
         return curr;
     }

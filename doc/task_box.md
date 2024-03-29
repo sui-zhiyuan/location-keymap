@@ -1,4 +1,5 @@
-Task1: add global exception catcher.
+Task 1: add global exception catcher.   
+Task 2: log levels.   
 
-Bug1: move up level calculate wrong.
-Bug2: js line with "{" and "}"
+Fixed Bug1: move up level calculate wrong.   
+Bug2: js line with "{" and "}"   
