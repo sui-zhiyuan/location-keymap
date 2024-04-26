@@ -10,7 +10,7 @@ class ConsoleLogger implements Logger {
     }
 
     constructor(context: ExtensionContext) {
-        this.outputChannel = window.createOutputChannel("location-keymap");
+        this.outputChannel = window.createOutputChannel("Location Keymap");
         context.subscriptions.push(this.outputChannel);
     }
 
